@@ -22,7 +22,7 @@ def test_health():
 def test_missing_api_key():
     """Test request without API key."""
     response = requests.post(
-        f"{API_URL}/analyze",
+        f"{API_URL}/api/voice-detection",
         json={
             "language": "Tamil",
             "audioFormat": "mp3",
@@ -39,7 +39,7 @@ def test_missing_api_key():
 def test_invalid_api_key():
     """Test request with invalid API key."""
     response = requests.post(
-        f"{API_URL}/analyze",
+        f"{API_URL}/api/voice-detection",
         json={
             "language": "English",
             "audioFormat": "mp3",
@@ -57,7 +57,7 @@ def test_request_format():
     """Test that request format is validated correctly."""
     # Test missing language field
     response = requests.post(
-        f"{API_URL}/analyze",
+        f"{API_URL}/api/voice-detection",
         json={
             "audioFormat": "mp3",
             "audioBase64": "a" * 200
@@ -81,7 +81,7 @@ def test_with_audio_file(file_path: str):
     audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
     
     response = requests.post(
-        f"{API_URL}/analyze",
+        f"{API_URL}/api/voice-detection",
         json={
             "language": "English",
             "audioFormat": "mp3",

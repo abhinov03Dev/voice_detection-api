@@ -87,7 +87,7 @@ def _run_analysis(audio_base64: str):
 
 
 @app.post(
-    "/analyze",
+    "/api/voice-detection",
     response_model=AnalyzeResponse,
     responses={
         400: {"model": ErrorResponse},
