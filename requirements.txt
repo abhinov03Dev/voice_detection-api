@@ -8,6 +8,5 @@ python-multipart>=0.0.6
 soundfile>=0.12.0
 transformers>=4.35.0
 resampy>=0.4.0
-
-# Install CPU-only PyTorch manually:
-# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+torchaudio>=2.0.0
