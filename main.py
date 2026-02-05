@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
 from pydantic import BaseModel, Field
 from typing import Literal
 from contextlib import asynccontextmanager
@@ -34,8 +33,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan,
-    default_response_class=ORJSONResponse  
+    lifespan=lifespan
 )
 
 app.add_middleware(
