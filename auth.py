@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv("API_KEY", "hackathon_secret_key_2024")
+API_KEY = os.getenv("API_KEY")
+if not API_KEY:
+    raise RuntimeError("API_KEY environment variable is required")
 API_KEY_HEADER = APIKeyHeader(name="x-api-key", auto_error=False)
 
 
