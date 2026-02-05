@@ -4,10 +4,13 @@ Test script for Voice Detection API
 import requests
 import base64
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # API Configuration
-API_URL = "http://localhost:8000"
-API_KEY = "hackathon_secret_key_2024"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+API_KEY = os.getenv("API_KEY")
 
 def test_health():
     """Test health endpoint."""
