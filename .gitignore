@@ -80,6 +80,7 @@ model/
 *.h5
 *.pkl
 *.bin
+.model_cache/
 
 # Audio files (test files)
 *.wav

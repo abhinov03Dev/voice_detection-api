@@ -2,14 +2,32 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
+from contextlib import asynccontextmanager
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from auth import validate_api_key
-from detector import get_detector
+from detector import get_detector, preload_model
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Thread pool for CPU-bound audio processing
+executor = ThreadPoolExecutor(max_workers=4)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Preload model at startup for low latency first request."""
+    logger.info("Preloading voice detection model...")
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(executor, preload_model)
+    logger.info("Model preloaded successfully!")
+    yield
+    executor.shutdown(wait=True)
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -29,7 +47,8 @@ app = FastAPI(
     """,
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -114,6 +133,12 @@ async def health_check():
     }
 
 
+def _run_analysis(audio_base64: str):
+    """Run analysis in thread pool to avoid blocking."""
+    detector = get_detector()
+    return detector.analyze(audio_base64)
+
+
 # Main endpoint
 @app.post(
     "/analyze",
@@ -135,8 +160,13 @@ async def analyze_voice(
     try:
         logger.info(f"Received voice analysis request for language: {request.language}")
         
-        detector = get_detector()
-        classification, confidence, explanation = detector.analyze(request.audioBase64)
+        # Run CPU-bound analysis in thread pool for non-blocking
+        loop = asyncio.get_event_loop()
+        classification, confidence, explanation = await loop.run_in_executor(
+            executor,
+            _run_analysis,
+            request.audioBase64
+        )
         
         logger.info(f"Analysis complete: {classification} (confidence: {confidence:.2f})")
         
@@ -170,4 +200,4 @@ async def analyze_voice(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
