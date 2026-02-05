@@ -15,158 +15,108 @@ A secure REST API that accepts Base64-encoded MP3 audio and classifies whether t
 ### 1. Setup Virtual Environment
 
 ```bash
-# Create virtual environment
 python -m venv venv
-
-# Activate (Windows)
-.\venv\Scripts\activate
-
-# Activate (Linux/Mac)
-source venv/bin/activate
-```
-
-### 2. Install Dependencies
-
-```bash
+.\venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 ```
 
-### 3. Configure API Key
+### 2. Configure API Key
 
-Edit `.env` file to set your API key:
-
-```env
-API_KEY=your_secret_api_key_here
+```bash
+# .env file
+API_KEY=your_secret_api_key
 ```
 
-### 4. Run the Server
+### 3. Run Server
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-The API will be available at `http://localhost:8000`
+## API Usage
 
-## API Documentation
-
-Interactive docs available at:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-## Endpoints
-
-### Health Check
-
-```bash
-GET /health
-```
-
-Response:
-```json
-{
-  "status": "healthy",
-  "service": "Voice Detection API",
-  "version": "1.0.0",
-  "supported_languages": ["Tamil", "English", "Hindi", "Malayalam", "Telugu"]
-}
-```
-
-### Analyze Voice
-
-```bash
-POST /analyze
-```
+### Endpoint: `POST /analyze`
 
 **Headers:**
 ```
-x-api-key: YOUR_SECRET_API_KEY
+x-api-key: your_api_key
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request:**
 ```json
 {
-  "audio": "BASE64_ENCODED_MP3_DATA"
+  "language": "Tamil",
+  "audioFormat": "mp3",
+  "audioBase64": "BASE64_ENCODED_MP3"
 }
 ```
 
-**Success Response (200):**
+**Success Response:**
 ```json
 {
-  "result": "AI_GENERATED",
-  "confidence": 0.87
-}
-```
-or
-```json
-{
-  "result": "HUMAN",
-  "confidence": 0.92
+  "status": "success",
+  "language": "Tamil",
+  "classification": "AI_GENERATED",
+  "confidenceScore": 0.91,
+  "explanation": "Unnatural pitch consistency and robotic speech patterns detected"
 }
 ```
 
-**Error Responses:**
-- `401 Unauthorized` - Missing or invalid API key
-- `400 Bad Request` - Invalid Base64 or audio format
-- `422 Unprocessable Entity` - Validation error
-
-## Example Usage
-
-### Python
-
-```python
-import requests
-import base64
-
-# Read and encode audio file
-with open("sample.mp3", "rb") as f:
-    audio_base64 = base64.b64encode(f.read()).decode()
-
-# Make request
-response = requests.post(
-    "http://localhost:8000/analyze",
-    json={"audio": audio_base64},
-    headers={"x-api-key": "your_api_key"}
-)
-
-print(response.json())
-# {'result': 'HUMAN', 'confidence': 0.92}
+**Error Response:**
+```json
+{
+  "status": "error",
+  "message": "Invalid API key or malformed request"
+}
 ```
 
-### cURL
+## Request Fields
 
-```bash
-# Encode audio file
-AUDIO_BASE64=$(base64 -w 0 sample.mp3)
+| Field | Type | Description |
+|-------|------|-------------|
+| `language` | string | Tamil / English / Hindi / Malayalam / Telugu |
+| `audioFormat` | string | Always `mp3` |
+| `audioBase64` | string | Base64-encoded MP3 audio |
 
-# Make request
-curl -X POST http://localhost:8000/analyze \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your_api_key" \
-  -d "{\"audio\": \"$AUDIO_BASE64\"}"
+## Response Fields
+
+| Field | Description |
+|-------|-------------|
+| `status` | `success` or `error` |
+| `language` | Language of the audio |
+| `classification` | `AI_GENERATED` or `HUMAN` |
+| `confidenceScore` | Value between 0.0 and 1.0 |
+| `explanation` | Short reason for decision |
+
+## Testing with Postman
+
+1. Set method to **POST**, URL: `http://localhost:8000/analyze`
+2. Add header: `x-api-key: hackathon_secret_key_2024`
+3. Body → raw → JSON:
+```json
+{
+  "language": "English",
+  "audioFormat": "mp3",
+  "audioBase64": "your_base64_audio"
+}
 ```
 
-## Running Tests
-
-```bash
-python test_api.py
+### Convert MP3 to Base64 (PowerShell)
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("audio.mp3")) | Set-Clipboard
 ```
 
 ## Project Structure
 
 ```
 voice_detection-api/
-├── main.py           # FastAPI application
-├── auth.py           # API key authentication
-├── detector.py       # Voice detection logic
-├── requirements.txt  # Python dependencies
-├── test_api.py       # Test suite
-├── .env              # Environment variables
-├── .env.example      # Environment template
-├── model/            # ML model files (auto-generated)
-│   ├── voice_classifier.pkl
-│   └── scaler.pkl
-└── README.md         # This file
+├── main.py          # FastAPI application
+├── auth.py          # API key validation
+├── detector.py      # Wav2Vec2 deepfake detection
+├── requirements.txt # Dependencies
+├── .env             # API key config
+└── test_api.py      # Test suite
 ```
 
 ## Technical Details
@@ -184,6 +134,17 @@ The API extracts the following audio features for classification:
 ### Classification
 
 Uses a Random Forest classifier trained to distinguish between AI-generated and human voices based on subtle differences in audio characteristics.
+
+## Run Tests
+
+```bash
+python test_api.py
+```
+
+## API Docs
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
 ## License
 
